@@ -1,8 +1,8 @@
 import os
 import unittest
 from selenium.common.exceptions import TimeoutException
-from walletapi import Wallet
-from walletapi.driver_tools import driver_init
+from bbwalletapi import Wallet
+from bbwalletapi.driver_tools import driver_init
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait

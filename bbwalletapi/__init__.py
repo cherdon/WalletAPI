@@ -3,8 +3,8 @@ import logging
 import datetime
 import requests
 import time
-from walletapi.constants import *
-from walletapi.driver_tools import driver_init, CHROME_PATH, CHROME_BIN
+from bbwalletapi.constants import *
+from bbwalletapi.driver_tools import driver_init, CHROME_PATH, CHROME_BIN
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -74,8 +74,8 @@ class Wallet:
         account = account_mapping.get(account.upper(), "Cash")
 
         # Determine transaction type and ensure amount is non-negative
-        transaction_type = "Expense" if amount < 0 else "Income"
-        amount = abs(amount)
+        transaction_type = "Expense" if float(amount) < 0.0 else "Income"
+        amount = str(abs(float(amount)))
 
         # Uppercase the currency
         currency = currency.upper()
@@ -126,10 +126,6 @@ class Wallet:
             WebDriverWait(self.driver, 15).until(
                 EC.visibility_of_element_located((By.CSS_SELECTOR, 'div.ui.modal.transition.visible.active'))
             )
-
-            # Categorize the transaction and set amount to non-negative
-            transaction_type = 'Expense' if amount < 0 else 'Income'
-            amount = abs(amount)
 
             # Use XPath to find payee input field and enter payee
             payee_field = self.driver.find_element(By.XPATH,

@@ -3,8 +3,8 @@ import unittest
 from unittest.mock import MagicMock, patch
 from datetime import datetime
 import pytz
-from walletapi import Wallet
-from walletapi.driver_tools import driver_init
+from bbwalletapi import Wallet
+from bbwalletapi.driver_tools import driver_init
 from config import access_keys
 
 
@@ -36,8 +36,9 @@ class WalletTest(unittest.TestCase):
         }
         account = account_mapping.get(account.upper(), "Cash")
 
-        transaction_type = "Expense" if amount < 0 else "Income"
-        amount = abs(amount)
+        # Determine transaction type and ensure amount is non-negative
+        transaction_type = "Expense" if float(amount) < 0.0 else "Income"
+        amount = str(abs(float(amount)))
 
         currency = currency.upper()
 
