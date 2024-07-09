@@ -20,7 +20,7 @@ class TestWalletLogin(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        # Initialize the Xoda class with test credentials and ChromeDriver path
+        # Initialize the Wallet class with test credentials and ChromeDriver path
         cls.wallet = Wallet(username=access_keys["wallet"]["username"], password=access_keys["wallet"]["password"], driver=driver)
 
     def test_login(self):
