@@ -56,14 +56,14 @@ class WalletTest(unittest.TestCase):
         }
         category = category_mapping.get(category.lower(), "Others")
 
-        gmt_plus_8 = pytz.timezone("Asia/Singapore")
-        now = datetime.now(gmt_plus_8)
-        date = now.strftime("%b %d, %Y")
-        time = now.strftime("%I:%M%p")
+        # gmt_plus_8 = pytz.timezone("Asia/Singapore")
+        # now = datetime.now(gmt_plus_8)
+        # date = now.strftime("%b %d, %Y")
+        # time = now.strftime("%I:%M%p")
 
         payee = payee.capitalize()
 
-        return account, amount, currency, category, date, time, payee, transaction_type
+        return account, amount, currency, category, payee, transaction_type
 
     def test_add_record(self):
         wallet = Wallet(username=access_keys["wallet"]["username"], password=access_keys["wallet"]["password"], driver=driver)
@@ -71,7 +71,7 @@ class WalletTest(unittest.TestCase):
 
         wallet.add_record('grab', -150, 'sgd', 'food', 'john doe', 'Lunch payment')
 
-        account, amount, currency, category, date, time, payee, transaction_type = \
+        account, amount, currency, category, payee, transaction_type = \
             WalletTest.record_validation('grab', -150, 'sgd', 'food', 'john doe')
 
         self.assertEqual(account, "Grab Wallet")
@@ -82,27 +82,23 @@ class WalletTest(unittest.TestCase):
         self.assertEqual(transaction_type, "Expense")
 
     def test_record_validation(self):
-        account, amount, currency, category, date, time, payee, transaction_type = \
+        account, amount, currency, category, payee, transaction_type = \
             WalletTest.record_validation('grab', -150, 'sgd', 'food', 'john doe')
 
         self.assertEqual(account, "Grab Wallet")
         self.assertEqual(amount, 150)
         self.assertEqual(currency, "SGD")
         self.assertEqual(category, "Food & Beverages")
-        self.assertTrue(isinstance(date, str))
-        self.assertTrue(isinstance(time, str))
         self.assertEqual(payee, "John doe")
         self.assertEqual(transaction_type, "Expense")
 
-        account, amount, currency, category, date, time, payee, transaction_type = \
+        account, amount, currency, category, payee, transaction_type = \
             WalletTest.record_validation('unknown', 150, 'usd', 'unknown', 'jane doe')
 
         self.assertEqual(account, "Cash")
         self.assertEqual(amount, 150)
         self.assertEqual(currency, "USD")
         self.assertEqual(category, "Others")
-        self.assertTrue(isinstance(date, str))
-        self.assertTrue(isinstance(time, str))
         self.assertEqual(payee, "Jane doe")
         self.assertEqual(transaction_type, "Income")
 

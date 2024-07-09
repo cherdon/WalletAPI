@@ -2,6 +2,7 @@ import pytz
 import logging
 import datetime
 import requests
+import time
 from walletapi.constants import *
 from walletapi.driver_tools import driver_init, CHROME_PATH, CHROME_BIN
 from selenium.webdriver.common.by import By
@@ -96,22 +97,22 @@ class Wallet:
         category = category_mapping.get(category.lower(), "Others")
 
         # Get current date and time in GMT+8
-        gmt_plus_8 = pytz.timezone("Asia/Singapore")
-        now = datetime.datetime.now(gmt_plus_8)
-        date = now.strftime("%b %d, %Y")
-        time = now.strftime("%I:%M%p")
+        # gmt_plus_8 = pytz.timezone("Asia/Singapore")
+        # now = datetime.datetime.now(gmt_plus_8)
+        # date = now.strftime("%b %d, %Y")
+        # time = now.strftime("%I:%M%p")
 
         # Capitalize the first letter of payee
         payee = payee.capitalize()
 
         # Return the validated and formatted values
-        return account, amount, currency, category, date, time, payee, transaction_type
+        return account, amount, currency, category, payee, transaction_type
 
     def add_record(self, account, amount, currency, category, payee, description):
         try:
             logger.info("--- Adding a new record ---")
 
-            account, amount, currency, category, date, time, payee, transaction_type = \
+            account, amount, currency, category, payee, transaction_type = \
                 self.record_validation(account, amount, currency, category, payee)
 
             # Click on the "＋ Record" button
@@ -130,32 +131,31 @@ class Wallet:
             transaction_type = 'Expense' if amount < 0 else 'Income'
             amount = abs(amount)
 
+            # Use XPath to find payee input field and enter payee
+            payee_field = self.driver.find_element(By.XPATH,
+                                                   '//div[contains(@class, "form-detail")]//label[text()="Payee"]/following-sibling::div//input[@type="text"]')
+            payee_field.send_keys(payee)
+            self.driver.find_element(By.CSS_SELECTOR, 'textarea[name="note"]').send_keys(description)
+
             # Select transaction type
             self.select_transaction_type(transaction_type)
 
             # Fill in the record details
-            self.select_dropdown_option('div[name="accountId"]', account)
+            self.select_dropdown_option('div[name="accountId"]', '//div[@role="option"]//div[@class="label" and text()="{}"]', account)
             self.driver.find_element(By.CSS_SELECTOR, 'input[name="amount"]').send_keys(amount)
-            self.select_dropdown_option('div[name="currencyId"]', currency)
-            self.select_dropdown_option('div.ui.fluid.selection.dropdown', category)  # Assumes this is for category
-            # Use XPath to find date input field and enter date
-            date_field = self.driver.find_element(By.XPATH, '//div[@class="react-datepicker-wrapper"]//input[@type="text" and contains(@value, "2024")]')
-            date_field.clear()
-            date_field.send_keys(date)
-
-            # Use XPath to find time input field and enter time
-            time_field = self.driver.find_element(By.XPATH,  '//div[@class="react-datepicker-wrapper"]//input[@type="text" and contains(@value, "AM") or contains(@value, "PM")]')
-            time_field.clear()
-            time_field.send_keys(time)
-
-            # Use XPath to find payee input field and enter payee
-            payee_field = self.driver.find_element(By.XPATH, '//div[@class="field"]//label[text()="Payee"]/following-sibling::div//input[@type="text"]')
-            payee_field.send_keys(payee)
-            self.driver.find_element(By.CSS_SELECTOR, 'textarea[name="note"]').send_keys(description)
+            self.select_dropdown_option('div[name="currencyId"]', '//div[@role="option"]//span[@class="text" and text()="{}"]', currency)
+            self.select_dropdown_option('div.ui.fluid.selection.dropdown', '//div[@class="icon-option category-option"]//div[@class="label" and text()="{}"]', category)
+            # Select the first item in the category dropdown if shown
+            first_category_item = WebDriverWait(self.driver, 15).until(
+                EC.element_to_be_clickable((By.XPATH, '//div[@class="menu transition visible"]//li[@role="option"]'))
+            )
+            first_category_item.click()
 
             # Submit the form
             submit_button = self.driver.find_element(By.CSS_SELECTOR, 'button.ui.circular.fluid.primary.button')
             submit_button.click()
+
+            time.sleep(10)
 
             logger.info("--- Record added successfully ---")
         except Exception as e:
@@ -172,13 +172,11 @@ class Wallet:
         except Exception as e:
             logger.error(f"Error selecting transaction type: {e}")
 
-    def select_dropdown_option(self, dropdown_css_selector, option_text):
+    def select_dropdown_option(self, dropdown_css_selector, option_selector, option_text):
         dropdown = WebDriverWait(self.driver, 15).until(
             EC.element_to_be_clickable((By.CSS_SELECTOR, dropdown_css_selector))
         )
         dropdown.click()
-        option = WebDriverWait(self.driver, 15).until(
-            EC.element_to_be_clickable(
-                (By.XPATH, f'//div[@role="option"]//div[@class="label" and text()="{option_text}"]'))
-        )
+        option_selector = option_selector.format(option_text)
+        option = WebDriverWait(self.driver, 15).until(EC.element_to_be_clickable((By.XPATH, option_selector)))
         option.click()
